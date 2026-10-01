@@ -3,109 +3,306 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="description" content="Offline-first point of sale with sales, purchases, stock, accounts and reports.">
-  <meta name="theme-color" content="#0d6efd">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; connect-src 'self' https://eposwala.com https://cdn.jsdelivr.net; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
+  <meta name="description" content="Offline-first POS for imitation jewellery wholesale — bills, khata and Bluetooth printing.">
+  <meta name="theme-color" content="#1C1408">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; connect-src 'self' https://cdn.jsdelivr.net; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="SaleAPP POS">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Zewar POS">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="css/app.css">
-  <title>SaleAPP POS</title>
+  <title>Zewar POS</title>
 </head>
 <body>
-  <!-- Splash / loading screen -->
-  <div id="splash">
-    <img src="icons/icon-192.png" alt="" width="84" height="84">
-    <div class="fw-semibold mt-3">SaleAPP POS</div>
-    <div class="spinner-border spinner-border-sm text-primary mt-3" role="status"><span class="visually-hidden">Loading</span></div>
-    <div id="splash-error" class="text-danger small mt-3 px-4 text-center"></div>
-  </div>
 
-  <!-- Login -->
-  <div id="view-login" class="d-none">
-    <div class="login-wrap">
-      <div class="card shadow-sm login-card">
-        <div class="card-body p-4">
-          <div class="text-center mb-4">
-            <img src="icons/icon-192.png" alt="" width="64" height="64" class="mb-2">
-            <h1 class="h4 mb-1">SaleAPP POS</h1>
-            <div class="text-body-secondary small">Sign in to continue</div>
-          </div>
-          <div id="login-notice" class="alert alert-warning small d-none"></div>
-          <form id="login-form" novalidate>
-            <div class="form-floating mb-3">
-              <input type="text" class="form-control" id="login-username" name="username" placeholder="Username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required>
-              <label for="login-username">Username</label>
-            </div>
-            <div class="form-floating mb-3 position-relative">
-              <input type="password" class="form-control" id="login-password" name="password" placeholder="Password" autocomplete="current-password" required>
-              <label for="login-password">Password</label>
-              <button type="button" class="btn btn-link position-absolute top-50 end-0 translate-middle-y text-body-secondary" id="toggle-pw" aria-label="Show password"><i class="bi bi-eye"></i></button>
-            </div>
-            <div id="login-error" class="alert alert-danger py-2 small d-none"></div>
-            <button type="submit" class="btn btn-primary btn-lg w-100" id="login-btn">Sign in</button>
-          </form>
-          <div class="text-center small text-body-secondary mt-3" id="login-conn"></div>
-        </div>
+<!-- ╔══════════════════════════════════════╗
+     ║  SPLASH / LOADING SCREEN            ║
+     ╚══════════════════════════════════════╝ -->
+<div id="splash">
+  <!-- Subtle radial glow spots -->
+  <div class="splash-glow splash-glow-tl"></div>
+  <div class="splash-glow splash-glow-br"></div>
+
+  <div class="splash-inner">
+
+    <!-- Crown logo SVG -->
+    <div class="splash-logo-wrap">
+      <svg class="splash-crown" viewBox="0 0 120 88" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="cg1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FFF3B0"/>
+            <stop offset="45%" stop-color="#D4AF37"/>
+            <stop offset="100%" stop-color="#7A5200"/>
+          </linearGradient>
+          <linearGradient id="cg2" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#B8900A"/>
+            <stop offset="50%" stop-color="#E8C84A"/>
+            <stop offset="100%" stop-color="#B8900A"/>
+          </linearGradient>
+          <radialGradient id="rg1" cx="38%" cy="32%" r="68%">
+            <stop offset="0%" stop-color="#FF8A9A"/>
+            <stop offset="100%" stop-color="#9B0020"/>
+          </radialGradient>
+          <radialGradient id="rg2" cx="38%" cy="32%" r="68%">
+            <stop offset="0%" stop-color="#FF7088"/>
+            <stop offset="100%" stop-color="#860018"/>
+          </radialGradient>
+          <filter id="gshadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="rgba(201,168,76,.35)"/>
+          </filter>
+        </defs>
+        <!-- Crown body -->
+        <g filter="url(#gshadow)">
+          <path d="M12,60 L12,50 L27,34 L43,60 L60,8 L77,60 L93,34 L108,50 L108,60 Z" fill="url(#cg1)"/>
+          <!-- Shadow panels inside crown -->
+          <path d="M12,50 L12,60 L28,60 Z" fill="rgba(0,0,0,.18)"/>
+          <path d="M108,50 L108,60 L92,60 Z" fill="rgba(0,0,0,.15)"/>
+          <!-- Center highlight -->
+          <path d="M43,60 L60,8 L77,60 Z" fill="rgba(255,248,180,.1)"/>
+          <!-- Base band -->
+          <rect x="12" y="60" width="96" height="20" rx="6" fill="url(#cg2)"/>
+          <!-- Base shine -->
+          <rect x="16" y="62" width="88" height="7" rx="4" fill="rgba(255,250,180,.18)"/>
+          <!-- Base decorative dots -->
+          <circle cx="38" cy="70" r="3"   fill="rgba(255,240,130,.55)"/>
+          <circle cx="60" cy="70" r="3.5" fill="rgba(255,245,150,.65)"/>
+          <circle cx="82" cy="70" r="3"   fill="rgba(255,240,130,.55)"/>
+        </g>
+        <!-- Crown outline highlight -->
+        <path d="M12,50 L27,34 L43,60 L60,8 L77,60 L93,34 L108,50" fill="none" stroke="rgba(255,248,160,.22)" stroke-width="1.3" stroke-linejoin="round"/>
+
+        <!-- Center top gem (ruby — largest) -->
+        <circle cx="60" cy="8"  r="11" fill="url(#rg1)"/>
+        <circle cx="57" cy="5.5" r="4" fill="rgba(255,255,255,.55)"/>
+        <path d="M60,-2 L69,5 L66,18 L54,18 L51,5 Z" fill="none" stroke="rgba(255,255,255,.18)" stroke-width=".8"/>
+
+        <!-- Left peak gem -->
+        <circle cx="27" cy="34" r="8"   fill="url(#rg2)"/>
+        <circle cx="24.5" cy="31.5" r="3" fill="rgba(255,255,255,.5)"/>
+
+        <!-- Right peak gem -->
+        <circle cx="93" cy="34" r="8"   fill="url(#rg2)"/>
+        <circle cx="90.5" cy="31.5" r="3" fill="rgba(255,255,255,.5)"/>
+      </svg>
+    </div>
+
+    <!-- Ornament row -->
+    <div class="splash-ornament" aria-hidden="true">✦ &nbsp; ✦ &nbsp; ✦</div>
+
+    <!-- Brand name -->
+    <div class="splash-brand-name">ZEWAR</div>
+    <div class="splash-pos-tag">P &nbsp;&thinsp; O &nbsp;&thinsp; S</div>
+
+    <!-- Urdu tagline -->
+    <div class="splash-urdu">زیور ہول سیل منیجمنٹ</div>
+
+    <!-- Ornamental divider -->
+    <div class="splash-divider" aria-hidden="true">
+      <span class="sd-line"></span>
+      <span class="sd-gem">◆</span>
+      <span class="sd-line"></span>
+    </div>
+
+    <!-- Shop name (filled from settings) -->
+    <div class="splash-shop d-none" id="splash-shop"></div>
+
+    <!-- Loader -->
+    <div class="splash-spin">
+      <div class="spinner-border spinner-border-sm text-warning" role="status">
+        <span class="visually-hidden">Loading…</span>
       </div>
-      <div class="text-center small text-body-secondary mt-3">Internet is required to sign in. After sign-in the POS works offline.</div>
     </div>
+
+    <div id="splash-error" class="splash-error"></div>
   </div>
 
-  <!-- Application -->
-  <div id="view-app" class="d-none">
-    <aside id="sidebar" class="d-none d-lg-flex flex-column">
-      <div class="sidebar-brand"><img src="icons/icon-192.png" alt="" width="28" height="28"> <span id="brand-name">SaleAPP POS</span></div>
-      <nav class="nav flex-column flex-grow-1 overflow-auto nav-menu" aria-label="Main"></nav>
-    </aside>
-    <div class="app-main">
-      <header class="app-topbar">
-        <button class="btn btn-link text-body d-lg-none px-1" data-bs-toggle="offcanvas" data-bs-target="#menu-offcanvas" aria-label="Menu"><i class="bi bi-list fs-4"></i></button>
-        <div class="fw-semibold text-truncate flex-grow-1" id="topbar-title">Dashboard</div>
-        <span id="conn-badge" class="badge rounded-pill conn-online" title="Connection status"><i class="bi bi-wifi"></i> <span>Online</span></span>
-        <div class="dropdown">
-          <button class="btn btn-link text-body px-1" data-bs-toggle="dropdown" aria-label="Account"><i class="bi bi-person-circle fs-5"></i></button>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li><div class="dropdown-item-text small"><div class="fw-semibold" id="user-name"></div><div class="text-body-secondary" id="user-role"></div></div></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#/settings"><i class="bi bi-gear me-2"></i>Settings</a></li>
-            <li><button class="dropdown-item d-none" id="install-btn"><i class="bi bi-download me-2"></i>Install app</button></li>
-            <li><button class="dropdown-item text-danger" id="logout-btn"><i class="bi bi-box-arrow-right me-2"></i>Log out</button></li>
-          </ul>
-        </div>
-      </header>
-      <main id="content" tabindex="-1"></main>
+  <div class="splash-footer-text" aria-hidden="true">Made for Pakistan Jewellery Traders</div>
+</div>
+
+<!-- ╔══════════════════════════════════════╗
+     ║  PIN LOCK SCREEN                    ║
+     ╚══════════════════════════════════════╝ -->
+<div id="pin-screen" class="d-none">
+  <div class="pin-inner">
+    <!-- Mini branding -->
+    <div class="pin-brand">
+      <svg class="pin-crown" viewBox="0 0 120 88" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="pcg1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FFF3B0"/>
+            <stop offset="100%" stop-color="#8B6200"/>
+          </linearGradient>
+          <linearGradient id="pcg2" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#B8900A"/>
+            <stop offset="50%" stop-color="#E8C84A"/>
+            <stop offset="100%" stop-color="#B8900A"/>
+          </linearGradient>
+          <radialGradient id="prg" cx="38%" cy="32%" r="68%">
+            <stop offset="0%" stop-color="#FF8A9A"/>
+            <stop offset="100%" stop-color="#9B0020"/>
+          </radialGradient>
+        </defs>
+        <path d="M12,60 L12,50 L27,34 L43,60 L60,8 L77,60 L93,34 L108,50 L108,60 Z" fill="url(#pcg1)"/>
+        <path d="M12,50 L12,60 L28,60 Z" fill="rgba(0,0,0,.18)"/>
+        <path d="M108,50 L108,60 L92,60 Z" fill="rgba(0,0,0,.15)"/>
+        <rect x="12" y="60" width="96" height="20" rx="6" fill="url(#pcg2)"/>
+        <circle cx="60" cy="8"  r="10" fill="url(#prg)"/>
+        <circle cx="57" cy="5.5" r="3.5" fill="rgba(255,255,255,.5)"/>
+        <circle cx="27" cy="34" r="7"   fill="url(#prg)"/>
+        <circle cx="24.5" cy="31.5" r="2.5" fill="rgba(255,255,255,.45)"/>
+        <circle cx="93" cy="34" r="7"   fill="url(#prg)"/>
+        <circle cx="90.5" cy="31.5" r="2.5" fill="rgba(255,255,255,.45)"/>
+      </svg>
+      <div class="pin-shop-name" id="pin-shop-name">Zewar POS</div>
     </div>
-    <nav id="bottom-nav" class="d-lg-none" aria-label="Quick navigation">
-      <a href="#/dashboard" data-route="dashboard"><i class="bi bi-house"></i><span>Home</span></a>
-      <a href="#/sales" data-route="sales"><i class="bi bi-receipt"></i><span>Sales</span></a>
-      <a href="#/pos" data-route="pos" class="nav-sell"><i class="bi bi-cart-plus-fill"></i><span>Sell</span></a>
-      <a href="#/products" data-route="products"><i class="bi bi-box-seam"></i><span>Products</span></a>
-      <a href="#" data-bs-toggle="offcanvas" data-bs-target="#menu-offcanvas"><i class="bi bi-grid"></i><span>More</span></a>
-    </nav>
+
+    <!-- PIN dots -->
+    <div class="pin-dots">
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+    </div>
+    <div class="pin-label">Enter PIN to continue</div>
+    <div class="pin-error d-none" id="pin-error"><i class="bi bi-x-circle me-1"></i>Incorrect PIN</div>
+
+    <!-- Number pad -->
+    <div class="pin-pad">
+      <button class="pin-key" data-k="1">1</button>
+      <button class="pin-key" data-k="2">2</button>
+      <button class="pin-key" data-k="3">3</button>
+      <button class="pin-key" data-k="4">4</button>
+      <button class="pin-key" data-k="5">5</button>
+      <button class="pin-key" data-k="6">6</button>
+      <button class="pin-key" data-k="7">7</button>
+      <button class="pin-key" data-k="8">8</button>
+      <button class="pin-key" data-k="9">9</button>
+      <div class="pin-key-empty"></div>
+      <button class="pin-key" data-k="0">0</button>
+      <button class="pin-key pin-back" data-k="back" aria-label="Delete">⌫</button>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════╗
+     ║  APPLICATION                        ║
+     ╚══════════════════════════════════════╝ -->
+<div id="view-app" class="d-none">
+  <aside id="sidebar" class="d-none d-lg-flex flex-column">
+    <div class="sidebar-brand">
+      <svg class="sidebar-crown-icon" viewBox="0 0 120 88" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="scg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#F5D868"/>
+            <stop offset="100%" stop-color="#8B6200"/>
+          </linearGradient>
+          <linearGradient id="scb" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#B8900A"/>
+            <stop offset="50%" stop-color="#E8C84A"/>
+            <stop offset="100%" stop-color="#B8900A"/>
+          </linearGradient>
+          <radialGradient id="srg" cx="38%" cy="32%" r="68%">
+            <stop offset="0%" stop-color="#FF8A9A"/>
+            <stop offset="100%" stop-color="#9B0020"/>
+          </radialGradient>
+        </defs>
+        <path d="M12,60 L12,50 L27,34 L43,60 L60,8 L77,60 L93,34 L108,50 L108,60 Z" fill="url(#scg)"/>
+        <path d="M12,50 L12,60 L28,60 Z" fill="rgba(0,0,0,.2)"/>
+        <path d="M108,50 L108,60 L92,60 Z" fill="rgba(0,0,0,.17)"/>
+        <rect x="12" y="60" width="96" height="20" rx="6" fill="url(#scb)"/>
+        <circle cx="60" cy="8"  r="10" fill="url(#srg)"/>
+        <circle cx="57" cy="5.5" r="3.5" fill="rgba(255,255,255,.5)"/>
+        <circle cx="27" cy="34" r="7"   fill="url(#srg)"/>
+        <circle cx="93" cy="34" r="7"   fill="url(#srg)"/>
+      </svg>
+      <span id="brand-name">Zewar POS</span>
+    </div>
+    <nav class="nav flex-column flex-grow-1 overflow-auto nav-menu" aria-label="Main"></nav>
+    <div class="sidebar-footer">
+      <button class="btn btn-sm btn-install d-none" id="install-btn"><i class="bi bi-download me-1"></i>Install app</button>
+    </div>
+  </aside>
+
+  <div class="app-main">
+    <header class="app-topbar">
+      <button class="btn btn-link text-body d-lg-none px-1" data-bs-toggle="offcanvas" data-bs-target="#menu-offcanvas" aria-label="Menu">
+        <i class="bi bi-list fs-4"></i>
+      </button>
+      <div class="fw-semibold text-truncate flex-grow-1" id="topbar-title">Dashboard</div>
+      <div class="dropdown">
+        <button class="btn btn-link text-body px-1" data-bs-toggle="dropdown" aria-label="More">
+          <i class="bi bi-three-dots-vertical fs-5"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="#/settings"><i class="bi bi-gear me-2"></i>Settings</a></li>
+          <li><button class="dropdown-item d-none" id="install-btn-menu"><i class="bi bi-download me-2"></i>Install app</button></li>
+        </ul>
+      </div>
+    </header>
+    <main id="content" tabindex="-1"></main>
   </div>
 
-  <div class="offcanvas offcanvas-start" tabindex="-1" id="menu-offcanvas" aria-labelledby="menu-title">
-    <div class="offcanvas-header">
-      <h5 class="offcanvas-title" id="menu-title">Menu</h5>
-      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  <!-- Mobile bottom nav -->
+  <nav id="bottom-nav" class="d-lg-none" aria-label="Quick navigation">
+    <a href="#/dashboard" data-route="dashboard"><i class="bi bi-house-fill"></i><span>Home</span></a>
+    <a href="#/sales"     data-route="sales">    <i class="bi bi-receipt"></i><span>Bills</span></a>
+    <a href="#/pos"       data-route="pos" class="nav-sell"><i class="bi bi-cart-plus-fill"></i><span>New Bill</span></a>
+    <a href="#/products"  data-route="products"> <i class="bi bi-box-seam"></i><span>Items</span></a>
+    <a href="#/customers" data-route="customers"><i class="bi bi-people-fill"></i><span>Khata</span></a>
+  </nav>
+</div>
+
+<!-- Mobile drawer -->
+<div class="offcanvas offcanvas-start offcanvas-jewel" tabindex="-1" id="menu-offcanvas">
+  <div class="offcanvas-header border-bottom-0 pb-1">
+    <div class="d-flex align-items-center gap-2">
+      <svg class="sidebar-crown-icon" viewBox="0 0 120 88" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="dcg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#F5D868"/><stop offset="100%" stop-color="#8B6200"/>
+          </linearGradient>
+          <linearGradient id="dcb" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#B8900A"/><stop offset="50%" stop-color="#E8C84A"/><stop offset="100%" stop-color="#B8900A"/>
+          </linearGradient>
+          <radialGradient id="drg" cx="38%" cy="32%" r="68%">
+            <stop offset="0%" stop-color="#FF8A9A"/><stop offset="100%" stop-color="#9B0020"/>
+          </radialGradient>
+        </defs>
+        <path d="M12,60 L12,50 L27,34 L43,60 L60,8 L77,60 L93,34 L108,50 L108,60 Z" fill="url(#dcg)"/>
+        <path d="M12,50 L12,60 L28,60 Z" fill="rgba(0,0,0,.2)"/>
+        <path d="M108,50 L108,60 L92,60 Z" fill="rgba(0,0,0,.17)"/>
+        <rect x="12" y="60" width="96" height="20" rx="6" fill="url(#dcb)"/>
+        <circle cx="60" cy="8"  r="10" fill="url(#drg)"/>
+        <circle cx="57" cy="5.5" r="3.5" fill="rgba(255,255,255,.5)"/>
+        <circle cx="27" cy="34" r="7"   fill="url(#drg)"/>
+        <circle cx="93" cy="34" r="7"   fill="url(#drg)"/>
+      </svg>
+      <span class="fw-bold" id="drawer-brand">Zewar POS</span>
     </div>
-    <div class="offcanvas-body p-0"><nav class="nav flex-column nav-menu" aria-label="Main"></nav></div>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
+  <div class="offcanvas-body p-0">
+    <nav class="nav flex-column nav-menu" aria-label="Main"></nav>
+  </div>
+</div>
 
-  <div id="toast-container" class="toast-container position-fixed top-0 start-50 translate-middle-x p-3"></div>
-  <div id="loading-overlay" class="d-none"><div class="bg-body rounded-3 shadow p-3 d-flex align-items-center gap-2"><div class="spinner-border spinner-border-sm text-primary"></div><span class="loading-text">Please wait…</span></div></div>
-  <div id="print-area" aria-hidden="true"></div>
+<div id="toast-container" class="toast-container position-fixed top-0 start-50 translate-middle-x p-3"></div>
+<div id="loading-overlay" class="d-none">
+  <div class="bg-body rounded-3 shadow p-3 d-flex align-items-center gap-2">
+    <div class="spinner-border spinner-border-sm text-warning"></div>
+    <span class="loading-text">Please wait…</span>
+  </div>
+</div>
+<div id="print-area" aria-hidden="true"></div>
 
-  <noscript><div class="alert alert-danger m-3">JavaScript is required to run this application.</div></noscript>
-  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script type="module" src="js/app.js"></script>
+<noscript><div class="alert alert-danger m-3">JavaScript is required to run this application.</div></noscript>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>

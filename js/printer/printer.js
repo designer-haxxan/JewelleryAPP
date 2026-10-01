@@ -3,7 +3,7 @@
 import { getSettings, saveSettings } from '../core/settings.js';
 import { AppError, esc } from '../core/utils.js';
 import * as UI from '../core/ui.js';
-import { buildReceipt, toEscPos, toHTML } from './receipt.js';
+import { buildSaleReceipt, toEscPos, toHTML } from './receipt.js';
 import { EscPos } from './escpos.js';
 import * as Raster from './raster.js';
 import { ensureFont, isRTL } from './raster.js';
@@ -202,12 +202,14 @@ async function output(bytesFn, htmlFn, width) {
   return printHTML(htmlFn(), { width });
 }
 
-// Print a document receipt. Falls back to the browser dialog if the chosen printer fails.
-export async function printDocument(kind, doc, { silentFail = false } = {}) {
+// Print a sale receipt. Falls back to the browser dialog if Bluetooth fails.
+export async function printSale(sale, { silentFail = false } = {}) {
   const { width, copies } = getSettings().printer;
-  const model = await buildReceipt(kind, doc);
+  const model = buildSaleReceipt(sale);
   try {
-    for (let i = 0; i < Math.max(1, Math.min(5, copies || 1)); i++) await output(() => toEscPos(model, width), () => toHTML(model, width), width);
+    for (let i = 0; i < Math.max(1, Math.min(5, copies || 1)); i++) {
+      await output(() => toEscPos(model, width), () => toHTML(model, width), width);
+    }
   } catch (e) {
     if (silentFail) { UI.toast(`Print failed: ${e.message}`, 'warning', 5000); return false; }
     if (await UI.confirmDialog(`${e.message}\n\nPrint using the browser print dialog instead?`, { okLabel: 'Browser print' })) {

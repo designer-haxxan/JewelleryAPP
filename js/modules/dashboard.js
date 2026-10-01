@@ -1,90 +1,103 @@
-// Dashboard: today's figures computed from transaction records, quick actions, alerts.
+// Dashboard — today's stats + quick actions + recent bills.
 import * as idb from '../db/idb.js';
-import * as UI from '../core/ui.js';
-import { esc, fmtNum, fmtQty, fmtTime, today, round2 } from '../core/utils.js';
-import { money } from '../core/views.js';
-import { pref } from '../core/settings.js';
-import * as Auth from '../services/auth.js';
-import * as Catalog from '../services/catalog.js';
-import * as Posting from '../services/posting.js';
-import * as Backup from '../services/backup.js';
+import { esc, fmtNum, today, monthStart } from '../core/utils.js';
+import { getSettings } from '../core/settings.js';
 
 const $ = window.jQuery;
+const cur = () => getSettings().currency;
 
-export async function todayFigures(date = today()) {
-  const r = IDBKeyRange.only(date);
-  const [sales, purchases, sret, pret, vouchers, entries, accounts] = await idb.read(['sales', 'purchases', 'saleReturns', 'purchaseReturns', 'vouchers', 'entries', 'accounts'], (t) => Promise.all([
-    t.getAllByIndex('sales', 'date', r), t.getAllByIndex('purchases', 'date', r), t.getAllByIndex('saleReturns', 'date', r),
-    t.getAllByIndex('purchaseReturns', 'date', r), t.getAllByIndex('vouchers', 'date', r), t.getAllByIndex('entries', 'date', r), t.getAll('accounts'),
-  ]));
-  const live = (x) => x.filter((d) => d.status !== 'void');
-  const cashIds = new Set(accounts.filter((a) => ['cash', 'bank'].includes(a.type)).map((a) => a.id));
-  const cashEntries = entries.filter((e) => cashIds.has(e.accountId) && e.refType !== 'opening' && e.refType !== 'transfer');
-  const s = live(sales); const p = live(purchases);
-  return {
-    sales: round2(s.reduce((a, d) => a + d.total, 0)), salesCount: s.length,
-    purchases: round2(p.reduce((a, d) => a + d.total, 0)), purchasesCount: p.length,
-    saleReturns: round2(live(sret).reduce((a, d) => a + d.total, 0)),
-    purchaseReturns: round2(live(pret).reduce((a, d) => a + d.total, 0)),
-    cashIn: round2(cashEntries.reduce((a, e) => a + e.debit, 0)),
-    cashOut: round2(cashEntries.reduce((a, e) => a + e.credit, 0)),
-    txCount: s.length + p.length + live(sret).length + live(pret).length + live(vouchers).length,
-    recent: s.sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 6),
-  };
+async function loadStats() {
+  const todayStr = today();
+  const monthStr = monthStart();
+
+  const sales = await idb.getAll('sales');
+  const active = sales.filter((s) => s.status !== 'void');
+
+  let todaySales = 0, todayCount = 0;
+  let monthSales = 0, outstanding = 0;
+
+  for (const s of active) {
+    if (s.date === todayStr) { todaySales += s.total; todayCount++; }
+    if (s.date >= monthStr) monthSales += s.total;
+    outstanding += s.balance || 0;
+  }
+
+  const recentSales = [...active]
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, 6);
+
+  const customerCount = (await idb.getAll('customers')).length;
+  const productCount = (await idb.getAllByIndex('products', 'active', 1)).length;
+
+  return { todaySales, todayCount, monthSales, outstanding, recentSales, customerCount, productCount };
+}
+
+function statCard(icon, iconClass, label, value, sub = '') {
+  return `<div class="stat-card card p-3 d-flex flex-row align-items-center gap-3">
+    <div class="stat-icon ${iconClass}"><i class="bi bi-${icon}"></i></div>
+    <div class="flex-grow-1 min-w-0">
+      <div class="stat-label">${esc(label)}</div>
+      <div class="stat-value money">${esc(value)}</div>
+      ${sub ? `<div class="stat-label mt-0">${esc(sub)}</div>` : ''}
+    </div></div>`;
+}
+
+function billStatusHtml(s) {
+  if (!s.balance || s.balance < 0.005) return '<span class="badge bill-status-paid bg-success-subtle text-success">Paid</span>';
+  if (s.paid > 0.005) return `<span class="badge bill-status-partial" style="background:rgba(197,124,0,.12);color:#a06300">Partial</span>`;
+  return '<span class="badge bill-status-unpaid bg-danger-subtle text-danger">Unpaid</span>';
 }
 
 export default {
-  async render(el) {
-    this.destroy();
-    const $el = $(el);
-    const u = Auth.user();
-    const [f, bal] = await Promise.all([todayFigures(), Posting.allBalances()]);
-    let rec = 0; let pay = 0;
-    for (const [id, b] of bal) { if (id.startsWith('C:') && b.balance > 0) rec += b.balance; if (id.startsWith('S:') && b.balance < 0) pay -= b.balance; }
-    const prods = Catalog.allProducts().filter((p) => p.active && p.trackStock !== false);
-    const stockValue = prods.reduce((s, p) => s + Math.max(0, p.stock) * (p.purchasePrice || 0), 0);
-    const low = prods.filter((p) => p.stock <= (p.minStock || 0)).sort((a, b) => a.stock - b.stock);
-    const lastBackup = pref.get('lastBackupAt');
-    const backupDays = lastBackup ? Math.floor((Date.now() - new Date(lastBackup)) / 86400000) : null;
-    const stat = (label, value, icon, color, href = null) => `<div class="col-6 col-md-4 col-xl-3"><${href ? `a href="${href}"` : 'div'} class="card stat-card h-100 text-decoration-none"><div class="card-body py-2 px-3">
-      <div class="d-flex justify-content-between"><div class="stat-label">${label}</div><i class="bi bi-${icon} text-${color}"></i></div><div class="stat-value money">${value}</div></div></${href ? 'a' : 'div'}></div>`;
-    const qa = (href, icon, label, perm) => (!perm || Auth.can(perm)) ? `<div class="col-4 col-md-2"><a class="quick-action" href="${href}"><i class="bi bi-${icon}"></i>${label}</a></div>` : '';
-    $el.html(`
-      <div class="d-flex justify-content-between align-items-end mb-3"><div><div class="text-body-secondary small">${new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</div><h1 class="h5 mb-0">Hello, ${esc(u.name.split(' ')[0])}</h1></div></div>
-      ${!navigator.onLine ? '<div class="alert alert-secondary py-2 small"><i class="bi bi-wifi-off me-1"></i>You are offline. Everything you do is saved on this device.</div>' : ''}
-      <div class="legacy-hint"></div>
-      ${Auth.can('backup.export') && (backupDays === null || backupDays >= 7) ? `<div class="alert alert-warning py-2 small d-flex align-items-center gap-2"><i class="bi bi-exclamation-triangle"></i><div class="flex-grow-1">${backupDays === null ? 'No backup has been made on this device yet.' : `Last backup was ${backupDays} days ago.`} Your data only lives on this device.</div><a class="btn btn-sm btn-warning" href="#/backup">Back up</a></div>` : ''}
-      <div class="row g-2 mb-3">
-        ${qa('#/pos', 'cart-plus', 'New sale', 'sale.create')}${qa('#/purchase/new', 'bag-plus', 'Purchase', 'purchase.manage')}
-        ${qa('#/vouchers', 'cash-coin', 'Cash book', 'voucher.create')}${qa('#/customers', 'people', 'Customers')}
-        ${qa('#/products', 'box-seam', 'Products')}${qa('#/reports', 'bar-chart-line', 'Reports', 'reports.view')}
+  async render(container) {
+    const s = getSettings();
+    container.innerHTML = `
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-gem" style="color:var(--zw-gold);font-size:1.3rem"></i>
+        <h1 class="h5 mb-0 fw-bold">${esc(s.business.name || 'Zewar POS')}</h1>
       </div>
-      <h2 class="h6 text-body-secondary">Today</h2>
-      <div class="row g-2 mb-3">
-        ${stat('Sales', money(f.sales), 'receipt', 'primary', '#/sales')}
-        ${Auth.can('purchase.manage') ? stat('Purchases', money(f.purchases), 'bag', 'secondary', '#/purchases') : ''}
-        ${stat('Cash received', money(f.cashIn), 'arrow-down-circle', 'success', Auth.can('voucher.create') ? '#/vouchers' : null)}
-        ${stat('Cash paid', money(f.cashOut), 'arrow-up-circle', 'danger', Auth.can('voucher.create') ? '#/vouchers' : null)}
-        ${stat('Transactions', f.txCount, 'activity', 'info')}
-        ${f.saleReturns ? stat('Sale returns', money(f.saleReturns), 'arrow-return-left', 'warning', '#/returns') : ''}
-      </div>
-      <h2 class="h6 text-body-secondary">Overall</h2>
-      <div class="row g-2 mb-3">
-        ${stat('Receivables', money(rec), 'person-down', 'warning', Auth.can('reports.view') ? '#/reports/receivables' : '#/customers')}
-        ${Auth.can('purchase.manage') ? stat('Payables', money(pay), 'truck', 'danger', Auth.can('reports.view') ? '#/reports/payables' : null) : ''}
-        ${stat('Stock value', money(stockValue), 'boxes', 'primary', '#/stock')}
-        ${stat('Low stock items', low.length, 'exclamation-triangle', low.length ? 'danger' : 'success', '#/stock')}
-      </div>
-      <div class="row g-3">
-        <div class="col-md-6"><h2 class="h6 text-body-secondary">Recent sales</h2><div class="list-card">${f.recent.map((s) => `<a class="list-row" href="#/sales/${encodeURIComponent(s.id)}"><div class="main"><div class="title">${esc(s.number)}</div><div class="sub">${esc(s.customerName)} · ${fmtTime(s.createdAt)}</div></div><div class="end fw-semibold money">${fmtNum(s.total)}</div></a>`).join('') || UI.emptyState('No sales yet today', 'receipt')}</div></div>
-        <div class="col-md-6"><h2 class="h6 text-body-secondary">Low stock</h2><div class="list-card">${low.slice(0, 6).map((p) => `<a class="list-row" href="#/stock/${encodeURIComponent(p.id)}"><div class="main"><div class="title">${esc(p.name)}</div><div class="sub">Min ${fmtQty(p.minStock || 0)}</div></div><div class="end"><span class="badge ${p.stock <= 0 ? 'text-bg-danger' : 'text-bg-warning'}">${fmtQty(p.stock)} ${esc(p.unit)}</span></div></a>`).join('') || UI.emptyState('All stock levels are fine', 'check-circle')}</div></div>
-      </div>`);
-    if (Auth.can('backup.restore') && pref.get('legacyHandled') !== true) {
-      Backup.legacyDataExists().then((yes) => yes && $el.find('.legacy-hint').html('<div class="alert alert-info py-2 small d-flex align-items-center gap-2"><i class="bi bi-database"></i><div class="flex-grow-1">Data from an older version was found on this device.</div><a class="btn btn-sm btn-info" href="#/backup">Review</a></div>'));
+      <div id="dash-stats" class="row g-2 mb-3"></div>
+      <div class="section-heading mt-3">Quick Actions</div>
+      <div class="quick-grid mb-4" id="quick-actions"></div>
+      <div class="section-heading">Recent Bills</div>
+      <div class="list-card" id="recent-bills"><div class="text-center py-4 text-body-secondary"><div class="spinner-border spinner-border-sm"></div></div></div>`;
+
+    const $root = $(container);
+
+    // Quick actions
+    $root.find('#quick-actions').html(`
+      <a href="#/pos"       class="quick-action"><i class="bi bi-cart-plus-fill"></i>New Bill</a>
+      <a href="#/customers" class="quick-action"><i class="bi bi-people-fill"></i>Customers</a>
+      <a href="#/products"  class="quick-action"><i class="bi bi-box-seam"></i>Products</a>
+      <a href="#/sales"     class="quick-action"><i class="bi bi-receipt"></i>Bills</a>
+    `);
+
+    // Stats
+    const st = await loadStats();
+    $root.find('#dash-stats').html(`
+      <div class="col-6 col-md-3">${statCard('cash-coin',       'stat-icon-gold',  'Today Sales',   `${cur()} ${fmtNum(st.todaySales)}`, `${st.todayCount} bill${st.todayCount !== 1 ? 's' : ''}`)}</div>
+      <div class="col-6 col-md-3">${statCard('calendar3',       'stat-icon-blue',  'This Month',    `${cur()} ${fmtNum(st.monthSales)}`)}</div>
+      <div class="col-6 col-md-3">${statCard('exclamation-circle-fill','stat-icon-red', 'Outstanding',`${cur()} ${fmtNum(st.outstanding)}`)}</div>
+      <div class="col-6 col-md-3">${statCard('people-fill',     'stat-icon-green', 'Customers',     `${st.customerCount}`, `${st.productCount} products`)}</div>
+    `);
+
+    // Recent bills
+    const $rb = $root.find('#recent-bills');
+    if (!st.recentSales.length) {
+      $rb.html(`<div class="empty-state"><i class="bi bi-receipt"></i><div class="empty-title">No bills yet</div><div class="empty-sub">Tap New Bill to get started</div></div>`);
+    } else {
+      $rb.html(st.recentSales.map((s) => `
+        <a href="#/sales/${encodeURIComponent(s.id)}" class="list-row">
+          <div class="avatar avatar-gold"><i class="bi bi-receipt"></i></div>
+          <div class="main">
+            <div class="title">${esc(s.number)} ${s.customerName ? `— ${esc(s.customerName)}` : ''}</div>
+            <div class="sub">${esc(s.date)} &nbsp;·&nbsp; ${st.recentSales.indexOf(s) === 0 ? 'Latest' : ''}</div>
+          </div>
+          <div class="end">
+            <div class="fw-bold money">${cur()} ${fmtNum(s.total)}</div>
+            <div class="mt-1">${billStatusHtml(s)}</div>
+          </div>
+        </a>`).join(''));
     }
-    const refresh = () => { if (location.hash === '' || location.hash.startsWith('#/dashboard')) this.render(el); };
-    this._h = refresh;
-    document.addEventListener('data:changed', refresh);
   },
-  destroy() { if (this._h) document.removeEventListener('data:changed', this._h); this._h = null; },
 };
