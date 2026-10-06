@@ -178,6 +178,54 @@ input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .sidebar-crown-icon { width: 28px; height: auto; flex-shrink: 0; }
 
 /* ══════════════════════════════════════════
+   Login Screen
+══════════════════════════════════════════ */
+#view-login {
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(160deg, #0E0802 0%, #1C1408 45%, #2C1C08 100%);
+  z-index: 2000; padding: 20px;
+}
+.login-container { width: 100%; max-width: 400px; }
+.login-box {
+  background: var(--bs-body-bg); border-radius: 18px; padding: 28px 20px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.24);
+  border: 1px solid var(--bs-border-color-translucent);
+}
+.login-crown { width: 56px; height: auto; display: block; margin: 0 auto 12px; filter: drop-shadow(0 3px 8px rgba(201,168,76,.28)); }
+.login-title { font-size: 1.6rem; font-weight: 900; text-align: center; margin: 0 0 2px;
+  background: linear-gradient(135deg, #D4AF37 0%, #F5D478 50%, #C9A84C 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.login-subtitle { text-align: center; color: var(--bs-secondary-color); font-size: .85rem; margin-bottom: 24px; }
+.login-form { margin-top: 20px; }
+.login-form .form-label { font-size: .85rem; font-weight: 600; margin-bottom: 6px; }
+.login-password-group { position: relative; display: flex; align-items: center; }
+.login-password-group .form-control { padding-right: 44px; }
+.login-pwd-toggle {
+  position: absolute; right: 8px; color: var(--bs-secondary-color);
+  padding: 4px 8px; margin: 0; border: 0; background: none; font-size: .95rem;
+}
+.login-pwd-toggle:hover { color: var(--bs-body-color); }
+.login-hint {
+  background: rgba(26,122,74,.1); border: 1px solid rgba(26,122,74,.25);
+  border-radius: 10px; padding: 10px 12px; margin-bottom: 16px;
+  font-size: .8rem; color: var(--zw-green); font-weight: 600;
+  direction: rtl; font-family: 'Jameel Noori Nastaleeq', serif;
+}
+#login-btn {
+  font-weight: 700; letter-spacing: .01em; height: 44px;
+  transition: all .2s; animation: none;
+}
+#login-btn.pulse {
+  animation: loginPulse 1.4s ease-in-out infinite;
+}
+@keyframes loginPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,.4); }
+  50%      { box-shadow: 0 0 0 8px rgba(201,168,76,.0); }
+}
+.login-form .alert { font-size: .8rem; padding: 10px 12px; margin: 0; }
+
+/* ══════════════════════════════════════════
    Sidebar (desktop) — dark ebony + gold
 ══════════════════════════════════════════ */
 #sidebar {

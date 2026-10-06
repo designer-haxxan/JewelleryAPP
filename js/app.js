@@ -5,11 +5,13 @@ import * as UI from './core/ui.js';
 import { esc } from './core/utils.js';
 import { openDB } from './db/idb.js';
 import * as Catalog from './services/catalog.js';
+import * as Auth from './services/auth.js';
 
 const $ = window.jQuery;
 
 // route → [loader, title, icon, menuSection]
 const ROUTES = {
+  login:     [() => import('./modules/login.js'),       'Sign In',      '',              ''],
   dashboard: [() => import('./modules/dashboard.js'),  'Dashboard',    'house-fill',    'Main'],
   pos:       [() => import('./modules/pos.js'),         'New Bill',     'cart-plus-fill','Main'],
   sales:     [() => import('./modules/sales.js'),       'Bills',        'receipt',       'Main'],
@@ -17,7 +19,7 @@ const ROUTES = {
   customers: [() => import('./modules/customers.js'),   'Customers',    'people-fill',   'Catalogue'],
   settings:  [() => import('./modules/settings.js'),    'Settings',     'gear-fill',     'App'],
 };
-const FOCUS_ROUTES = new Set(['pos']);
+const FOCUS_ROUTES = new Set(['pos', 'login']);
 
 let currentModule = null;
 let routeToken = 0;
@@ -101,8 +103,20 @@ function buildMenu() {
 
 async function route() {
   const token = ++routeToken;
-  const parts = (location.hash.replace(/^#\/?/, '') || 'dashboard').split('/').map(decodeURIComponent);
-  const name = ROUTES[parts[0]] ? parts[0] : 'dashboard';
+  // Check auth: if no user and not on login page, redirect to login
+  const { user } = Auth.restoreSession();
+  let parts = (location.hash.replace(/^#\/?/, '') || 'dashboard').split('/').map(decodeURIComponent);
+  let name = ROUTES[parts[0]] ? parts[0] : 'dashboard';
+
+  if (!user && name !== 'login') {
+    location.hash = '#/login';
+    return;
+  }
+  if (user && name === 'login') {
+    location.hash = '#/dashboard';
+    return;
+  }
+
   const [loader, title] = ROUTES[name];
   try { currentModule?.destroy?.(); } catch { /* ignore */ }
   currentModule = null;
@@ -126,12 +140,20 @@ async function route() {
 }
 
 async function startApp() {
+  const { user } = Auth.restoreSession();
+  if (!user) {
+    // Not logged in: show login screen
+    $('#splash').addClass('d-none');
+    $('#view-login').removeClass('d-none');
+    route();
+    return;
+  }
+
   await Catalog.load();
   buildMenu();
   const s = getSettings();
   if (s.business.name) {
     $('#splash-shop').text(s.business.name).closest('#splash-shop').removeClass('d-none');
-    // brief pause so the shop name shows before transition
     await new Promise((r) => setTimeout(r, 480));
   }
   if (navigator.storage?.persist) navigator.storage.persisted().then((p) => { if (!p) navigator.storage.persist().catch(() => {}); });

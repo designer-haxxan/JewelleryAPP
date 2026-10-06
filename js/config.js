@@ -5,6 +5,8 @@ export const CONFIG = {
   APP_VERSION: '1.0.0',
   SCHEMA_VERSION: 1,
   BACKUP_VERSION: 1,
+  AUTH_API_BASE: 'https://eposwala.com/api',
+  SUPPORT_PHONE: '0300-1234567',
 };
 
 export const CDN = {
